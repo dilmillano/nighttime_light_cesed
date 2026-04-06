@@ -1,6 +1,6 @@
 # Nighttime Light Data
 
-Repositorio de datos y código para el análisis de luces nocturnas (*nighttime lights*, NTL) a nivel municipal en Colombia.
+Repositorio de datos y código para el análisis de luces nocturnas (*nighttime lights*, NTL) a nivel municipal en Colombia. Cubre tres fuentes distintas: datos oficiales EOG (DMSP 1992–2013 y VIIRS 2012–2021), la serie armonizada de Li et al. (2020) (1992–2024) y la serie LRCC-DVNL de Zhong et al. (2025) (1992–2022).
 
 ---
 
@@ -8,23 +8,61 @@ Repositorio de datos y código para el análisis de luces nocturnas (*nighttime 
 
 ```
 nighttime_light/
-├── input/
-│   ├── ntl/
-│   │   ├── EOG_Elvidge_DMSP-VIIRS/        ← Fuente 1: datos crudos oficiales
-│   │   ├── Li2020_Harmonized_DMSP-VIIRS/  ← Fuente 2: serie armonizada
-│   │   └── Zhong2025_LRCC-DVNL/           ← Fuente 3: serie corregida largo plazo
-│   └── geo/
-│       └── MPIOS_limpio.*                 ← Shapefile municipios Colombia (DANE)
+├── code/
+│   └── 01_process_ntl.R                   ← Script de procesamiento
 ├── output/
-│   ├── clipped/                           ← TIFs recortados a Colombia
-│   └── stats/                             ← Shapefile y CSV con promedios por municipio
-└── code/
-    └── 01_process_ntl.R                   ← Script de procesamiento
+│   └── stats/
+│       ├── stats_EOG_DMSP.csv             ← NTL promedio por municipio, DMSP 1992-2013
+│       ├── stats_EOG_VIIRS.csv            ← NTL promedio por municipio, VIIRS 2012-2021
+│       ├── stats_Li2020.csv               ← NTL promedio por municipio, Li2020 1992-2024
+│       └── stats_Zhong2025.csv            ← NTL promedio por municipio, Zhong2025 1992-2022
+└── README.md
 ```
+
+Los siguientes archivos **no están en este repositorio** por su tamaño y se almacenan en OneDrive:
+
+| Carpeta | Contenido | Por qué no está en GitHub |
+|---------|-----------|---------------------------|
+| `input/ntl/` | Rasters globales crudos (DMSP, VIIRS, Li2020, Zhong2025) | ~40 GB |
+| `input/geo/` | Shapefile de municipios Colombia (`MPIOS_limpio.shp`) | Datos DANE |
+| `output/clipped/` | TIFs recortados a Colombia (96 archivos, uno por año/fuente) | ~2 GB |
+| `output/stats/*.shp` | Shapefiles con estadísticas por municipio | Requieren 5 archivos asociados; los CSVs son equivalentes y más portables |
+
+Para reproducir el procesamiento desde cero, descarga los datos crudos desde los enlaces de cada fuente (ver sección **Fuentes**) y ajusta la variable `base_dir` en el script.
 
 ---
 
-## Fuente 1 — EOG Elvidge: DMSP-OLS y VIIRS-DNB
+## Código
+
+**Script:** `code/01_process_ntl.R`
+
+Para cada fuente, el script:
+1. Descomprime archivos `.gz` (VIIRS) por streaming sin cargar en RAM
+2. Reproyecta al sistema de referencia correcto
+3. Recorta cada raster global al extent de Colombia (`MPIOS_limpio.shp`)
+4. Calcula el promedio de NTL por municipio (*zonal statistics*)
+5. Exporta TIFs comprimidos en `output/clipped/` y CSVs + shapefiles en `output/stats/`
+
+Los pasos 2–4 corren en paralelo sobre todos los años de cada fuente (12 workers). Optimizado para: 48 GB RAM · AMD Ryzen 7 7840U (16 threads).
+
+**Paquetes R requeridos:** `terra`, `sf`, `dplyr`, `stringr`, `tidyr`, `R.utils`, `future`, `future.apply`
+
+**Outputs generados:**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `output/clipped/EOG_DMSP/` | 22 TIFs DMSP recortados (1992–2013) |
+| `output/clipped/EOG_VIIRS/` | 10 TIFs VIIRS recortados (2012–2021) |
+| `output/clipped/Li2020/` | 33 TIFs armonizados recortados (1992–2024) |
+| `output/clipped/Zhong2025/` | 31 TIFs LRCC-DVNL recortados (1992–2022) |
+| `output/stats/mpios_ntl_*.shp` | Shapefile por fuente con columna `ntl_YYYY` por municipio |
+| `output/stats/stats_*.csv` | Tabla equivalente en formato CSV — 1 122 municipios × N años |
+
+---
+
+## Fuentes
+
+### Fuente 1 — EOG Elvidge: DMSP-OLS y VIIRS-DNB
 
 **Carpeta:** `input/ntl/EOG_Elvidge_DMSP-VIIRS/`
 **Institución:** Earth Observation Group (EOG), Payne Institute, Colorado School of Mines
@@ -33,7 +71,7 @@ nighttime_light/
 
 Son los datos **oficiales y sin procesar** de los que derivan las otras dos fuentes. Provienen de dos sensores con características muy distintas:
 
-### DMSP-OLS — Defense Meteorological Satellite Program
+#### DMSP-OLS — Defense Meteorological Satellite Program
 
 El programa DMSP operó **seis satélites distintos** entre 1992 y 2013 (F10, F12, F14, F15, F16, F18). Cada uno tiene su propia calibración y período de operación.
 
@@ -75,7 +113,7 @@ El programa DMSP operó **seis satélites distintos** entre 1992 y 2013 (F10, F1
 
 ---
 
-### VIIRS-DNB — Visible Infrared Imaging Radiometer Suite
+#### VIIRS-DNB — Visible Infrared Imaging Radiometer Suite
 
 El satélite **Suomi NPP**, lanzado en octubre de 2011, representa un salto tecnológico mayor frente al DMSP.
 
@@ -107,7 +145,7 @@ El satélite **Suomi NPP**, lanzado en octubre de 2011, representa un salto tecn
 
 ---
 
-### ¿Por qué no son directamente comparables?
+#### ¿Por qué no son directamente comparables?
 
 | Característica | DMSP-OLS | VIIRS-DNB |
 |----------------|----------|-----------|
@@ -124,7 +162,7 @@ Concatenar ambas series sin corrección genera un **salto artificial en 2014** q
 
 ---
 
-## Fuente 2 — Li et al. (2020): Serie armonizada DMSP + VIIRS
+### Fuente 2 — Li et al. (2020): Serie armonizada DMSP + VIIRS
 
 **Carpeta:** `input/ntl/Li2020_Harmonized_DMSP-VIIRS/`
 **Descarga:** https://figshare.com/articles/dataset/Harmonization_of_DMSP_and_VIIRS_nighttime_light_data_from_1992-2018_at_the_global_scale/9828827
@@ -134,7 +172,7 @@ Concatenar ambas series sin corrección genera un **salto artificial en 2014** q
 
 Serie continua que resuelve la incompatibilidad entre sensores produciendo una sola escala homogénea comparable año a año desde 1992.
 
-### Método de armonización (3 pasos)
+#### Método de armonización (3 pasos)
 
 **Paso 1 — Inter-calibración interna de DMSP (→ `calDMSP`)**
 Los seis satélites DMSP son inconsistentes entre sí: el mismo lugar en el mismo año medido por dos satélites distintos da valores distintos. Este paso aplica coeficientes empíricos derivados de los años de solapamiento entre satélites para llevar toda la serie 1992–2013 a una escala común.
@@ -151,7 +189,7 @@ Los parámetros *a* y *b* se derivan empíricamente del año 2013 y se aplican a
 **Paso 3 — Empalme y validación**
 Se une `calDMSP` (1992–2013) con `simVIIRS` (2014+) y se verifica la continuidad temporal en el año de transición.
 
-### Versiones y archivos
+#### Versiones y archivos
 
 ```
 Li2020_Harmonized_DMSP-VIIRS/
@@ -165,7 +203,7 @@ Li2020_Harmonized_DMSP-VIIRS/
 | `Harmonized_DN_NTL_YYYY_simVIIRS.tif` | VIIRS convertido a escala DMSP — años 2014–2024 |
 | `DN_NTL_2013_simVIIRS.tif` | 2013 en formato simVIIRS (año puente para verificar continuidad) |
 
-### Limitaciones
+#### Limitaciones
 - Los parámetros del sigmoide se derivan de un solo año (2013); se asume estabilidad en el tiempo
 - DN < 20 tienen mayor incertidumbre en zonas de baja luminosidad
 - La saturación DMSP en ciudades grandes no se elimina completamente
@@ -175,7 +213,7 @@ Li2020_Harmonized_DMSP-VIIRS/
 
 ---
 
-## Fuente 3 — Zhong et al. (2025): LRCC-DVNL
+### Fuente 3 — Zhong et al. (2025): LRCC-DVNL
 
 **Carpeta:** `input/ntl/Zhong2025_LRCC-DVNL/`
 **Descarga:** https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/15IKI5
@@ -185,7 +223,7 @@ Li2020_Harmonized_DMSP-VIIRS/
 
 Serie de largo plazo diseñada específicamente para **zonas de baja luminosidad** (zonas rurales, países de bajos ingresos, áreas protegidas), que representan ~80% de la superficie terrestre y son subestimadas por otros productos. Validada con correlación R² = 0.885 con PIB mundial.
 
-### Glosario de siglas
+#### Glosario de siglas
 
 | Sigla | Nombre completo | Qué es |
 |-------|----------------|--------|
@@ -195,7 +233,7 @@ Serie de largo plazo diseñada específicamente para **zonas de baja luminosidad
 | **LRCC-DVNL** | LR-DVNL + Continuity Correction | Producto final: LR-DVNL con corrección anual de continuidad (LACC) |
 | **LACC** | Linear-trend Annual Continuity Correction | Corrección anual que suaviza la transición 2013 preservando eventos reales |
 
-### Metodología en 4 etapas
+#### Metodología en 4 etapas
 
 **Etapa 1 → C-DVNL**
 Conversión VIIRS → escala DMSP usando una red neuronal convolucional **ResU-Net** (más sofisticada que la sigmoide de Li2020). Repara vacíos de datos en latitudes altas del año 2013 y extiende la serie hasta 2022.
@@ -210,7 +248,7 @@ Aplicación de la corrección LACC para eliminar la discontinuidad artificial de
 **Etapa 4 — Validación**
 Correlación con PIB mundial R² = 0.885, superior a Li2020 y Chen-NTL, especialmente en zonas de baja luminosidad.
 
-### Productos incluidos
+#### Productos incluidos
 
 | Carpeta / Archivo | Qué contiene | Estado |
 |-------------------|-------------|--------|
@@ -222,46 +260,3 @@ Correlación con PIB mundial R² = 0.885, superior a Li2020 y Chen-NTL, especial
 
 **Citar:**
 > Zhong et al. (2025). Global nighttime light dataset from 1992 to 2022 with focus on low-light areas. *Scientific Data*. https://doi.org/10.1038/s41597-025-05246-8
-
----
-
-## Disponibilidad de datos
-
-Por su tamaño, los siguientes archivos **no están en este repositorio** y se almacenan localmente en OneDrive:
-
-| Carpeta | Contenido | Tamaño aproximado |
-|---------|-----------|-------------------|
-| `input/ntl/` | Rasters globales crudos (DMSP, VIIRS, Li2020, Zhong2025) | ~40 GB |
-| `input/geo/` | Shapefile de municipios Colombia (`MPIOS_limpio.shp`) | — |
-| `output/clipped/` | TIFs recortados a Colombia (96 archivos, uno por año/fuente) | ~2 GB |
-| `output/stats/*.shp` | Shapefiles con estadísticas por municipio | — |
-
-Lo que **sí está disponible en este repositorio**:
-- El script de procesamiento (`code/01_process_ntl.R`)
-- Los **CSVs de estadísticas** (`output/stats/stats_*.csv`) — contienen el promedio de NTL por municipio y año para las cuatro fuentes y son el principal insumo para análisis
-
-Para reproducir el procesamiento desde cero, descarga los datos crudos desde los enlaces de cada fuente indicados en las secciones anteriores y ajusta la variable `base_dir` en el script.
-
----
-
-## Código y outputs
-
-**Script:** `code/01_process_ntl.R`
-
-Para cada una de las tres fuentes, el script:
-1. Descomprime archivos `.gz` (VIIRS) por streaming sin cargar en RAM
-2. Reproyecta al sistema de referencia correcto
-3. Recorta cada TIF global al extent de Colombia (`MPIOS_limpio.shp`)
-4. Calcula el promedio de valor NTL por municipio (*zonal statistics*)
-5. Exporta TIFs comprimidos en `output/clipped/` y shapefiles + CSVs en `output/stats/`
-
-Optimizado para: 48 GB RAM · AMD Ryzen 7 7840U (16 threads) · 12 workers en paralelo.
-
-| Output | Descripción |
-|--------|-------------|
-| `output/clipped/EOG_DMSP/` | 22 TIFs DMSP recortados (1992–2013) |
-| `output/clipped/EOG_VIIRS/` | 10 TIFs VIIRS recortados (2012–2021) |
-| `output/clipped/Li2020/` | 33 TIFs armonizados recortados (1992–2024) |
-| `output/clipped/Zhong2025/` | 31 TIFs LRCC-DVNL recortados (1992–2022) |
-| `output/stats/mpios_ntl_*.shp` | Shapefile por fuente con columna `ntl_YYYY` por municipio |
-| `output/stats/stats_*.csv` | Tabla equivalente en formato CSV |
