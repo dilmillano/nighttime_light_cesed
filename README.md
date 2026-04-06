@@ -8,25 +8,29 @@ Repositorio de datos y código para el análisis de luces nocturnas (*nighttime 
 
 ```
 nighttime_light/
-├── code/
-│   └── 01_process_ntl.R                   ← Script de procesamiento
+├── input/                                 ← [OneDrive] No incluido en GitHub por tamaño
+│   ├── ntl/
+│   │   ├── EOG_Elvidge_DMSP-VIIRS/        ← Fuente 1: datos crudos oficiales (~20 GB)
+│   │   ├── Li2020_Harmonized_DMSP-VIIRS/  ← Fuente 2: serie armonizada (~10 GB)
+│   │   └── Zhong2025_LRCC-DVNL/           ← Fuente 3: serie corregida largo plazo (~10 GB)
+│   └── geo/
+│       └── MPIOS_limpio.*                 ← Shapefile municipios Colombia (DANE)
 ├── output/
-│   └── stats/
+│   ├── clipped/                           ← [OneDrive] TIFs recortados a Colombia (~2 GB)
+│   │   ├── EOG_DMSP/                      ← 22 TIFs (1992–2013)
+│   │   ├── EOG_VIIRS/                     ← 10 TIFs (2012–2021)
+│   │   ├── Li2020/                        ← 33 TIFs (1992–2024)
+│   │   └── Zhong2025/                     ← 31 TIFs (1992–2022)
+│   └── stats/                             ← Incluido en GitHub
 │       ├── stats_EOG_DMSP.csv             ← NTL promedio por municipio, DMSP 1992-2013
 │       ├── stats_EOG_VIIRS.csv            ← NTL promedio por municipio, VIIRS 2012-2021
 │       ├── stats_Li2020.csv               ← NTL promedio por municipio, Li2020 1992-2024
-│       └── stats_Zhong2025.csv            ← NTL promedio por municipio, Zhong2025 1992-2022
+│       ├── stats_Zhong2025.csv            ← NTL promedio por municipio, Zhong2025 1992-2022
+│       └── mpios_ntl_*.shp                ← [OneDrive] Shapefiles equivalentes
+├── code/
+│   └── 01_process_ntl.R                   ← Script de procesamiento
 └── README.md
 ```
-
-Los siguientes archivos **no están en este repositorio** por su tamaño y se almacenan en OneDrive:
-
-| Carpeta | Contenido | Por qué no está en GitHub |
-|---------|-----------|---------------------------|
-| `input/ntl/` | Rasters globales crudos (DMSP, VIIRS, Li2020, Zhong2025) | ~40 GB |
-| `input/geo/` | Shapefile de municipios Colombia (`MPIOS_limpio.shp`) | Datos DANE |
-| `output/clipped/` | TIFs recortados a Colombia (96 archivos, uno por año/fuente) | ~2 GB |
-| `output/stats/*.shp` | Shapefiles con estadísticas por municipio | Requieren 5 archivos asociados; los CSVs son equivalentes y más portables |
 
 Para reproducir el procesamiento desde cero, descarga los datos crudos desde los enlaces de cada fuente (ver sección **Fuentes**) y ajusta la variable `base_dir` en el script.
 
