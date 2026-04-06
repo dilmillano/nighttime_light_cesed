@@ -1,0 +1,20 @@
+# Datos de entrada (quedan en OneDrive, no en GitHub)
+input/
+
+# TIFs recortados (pesados, quedan en OneDrive)
+output/clipped/
+
+# Archivos temporales y del sistema
+*.aux.xml
+*.zip
+*.7z
+*.gz
+.DS_Store
+Thumbs.db
+
+# Documento Word de referencia
+*.docx
+
+# Instrucciones internas
+GITHUB_INSTRUCTIONS.txt
+dataverse_files.zip
