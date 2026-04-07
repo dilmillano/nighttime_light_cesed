@@ -1,10 +1,12 @@
 # Nighttime Light Data
 
-Repositorio de datos y código para el análisis de luces nocturnas (*nighttime lights*, NTL) a nivel municipal en Colombia. Cubre tres fuentes distintas: datos oficiales EOG (DMSP 1992–2013 y VIIRS 2012–2021), la serie armonizada de Li et al. (2020) (1992–2024) y la serie LRCC-DVNL de Zhong et al. (2025) (1992–2022).
+Repositorio de datos de luces nocturnas. Este repositorio tiene dos propósitos: primero, descargar y entender 3 bases de datos de luces nocturnas; y segundo, el código permite recortar las imágenes, unificar el formato y calcular promedios a nivel municipal.
+
+A continuación se encuentran 3 secciones principales: **1. Estructura** muestra cómo debe quedar el proyecto completo, **2. Código** detalla qué hace el script de procesamiento, y **3. Fuentes** describe las 3 bases de datos utilizadas.
 
 ---
 
-## Estructura
+## 1. Estructura
 
 ```
 nighttime_light/
@@ -32,11 +34,14 @@ nighttime_light/
 └── README.md
 ```
 
-Para reproducir el procesamiento desde cero, descarga los datos crudos desde los enlaces de cada fuente (ver sección **Fuentes**) y ajusta la variable `base_dir` en el script.
+Para tener la estructura mostrada anteriormente en su totalidad debe descargar los archivos faltantes, que son pesados para incluirlos en GitHub:
+
+- **Inputs:** [Carpeta `input/` en OneDrive](https://uniandes-my.sharepoint.com/:f:/r/personal/d_millanorduz_uniandes_edu_co/Documents/nighttime_light/input?csf=1&web=1&e=N22WBb)
+- **Outputs clipped:** [Carpeta `output/` en OneDrive](https://uniandes-my.sharepoint.com/:f:/r/personal/d_millanorduz_uniandes_edu_co/Documents/nighttime_light/output?csf=1&web=1&e=o7cpp7)
 
 ---
 
-## Código
+## 2. Código
 
 **Script:** `code/01_process_ntl.R`
 
@@ -64,9 +69,9 @@ Los pasos 2–4 corren en paralelo sobre todos los años de cada fuente (12 work
 
 ---
 
-## Fuentes
+## 3. Fuentes
 
-### Fuente 1 — EOG Elvidge: DMSP-OLS y VIIRS-DNB
+### 3.1 Fuente 1 — EOG Elvidge: DMSP-OLS y VIIRS-DNB
 
 **Carpeta:** `input/ntl/EOG_Elvidge_DMSP-VIIRS/`
 **Institución:** Earth Observation Group (EOG), Payne Institute, Colorado School of Mines
@@ -166,7 +171,7 @@ Concatenar ambas series sin corrección genera un **salto artificial en 2014** q
 
 ---
 
-### Fuente 2 — Li et al. (2020): Serie armonizada DMSP + VIIRS
+### 3.2 Fuente 2 — Li et al. (2020): Serie armonizada DMSP + VIIRS
 
 **Carpeta:** `input/ntl/Li2020_Harmonized_DMSP-VIIRS/`
 **Descarga:** https://figshare.com/articles/dataset/Harmonization_of_DMSP_and_VIIRS_nighttime_light_data_from_1992-2018_at_the_global_scale/9828827
@@ -217,7 +222,7 @@ Li2020_Harmonized_DMSP-VIIRS/
 
 ---
 
-### Fuente 3 — Zhong et al. (2025): LRCC-DVNL
+### 3.3 Fuente 3 — Zhong et al. (2025): LRCC-DVNL
 
 **Carpeta:** `input/ntl/Zhong2025_LRCC-DVNL/`
 **Descarga:** https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/15IKI5
