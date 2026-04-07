@@ -43,14 +43,14 @@ Para tener la estructura mostrada anteriormente en su totalidad debe descargar l
 
 ## 2. Código
 
-**Script:** `code/01_process_ntl.R`
+### 2.1 `code/01_process_ntl.R` — Procesamiento de rasters
 
 Para cada fuente, el script:
 1. Descomprime archivos `.gz` (VIIRS) por streaming sin cargar en RAM
 2. Reproyecta al sistema de referencia correcto
 3. Recorta cada raster global al extent de Colombia (`MPIOS_limpio.shp`)
 4. Calcula el promedio de NTL por municipio (*zonal statistics*)
-5. Exporta TIFs comprimidos en `output/clipped/` y CSVs + shapefiles en `output/stats/`
+5. Exporta TIFs comprimidos en `output/01_clipped/` y CSVs + shapefiles en `output/02_stats/`
 
 Los pasos 2–4 corren en paralelo sobre todos los años de cada fuente (12 workers). Optimizado para: 48 GB RAM · AMD Ryzen 7 7840U (16 threads).
 
@@ -60,12 +60,19 @@ Los pasos 2–4 corren en paralelo sobre todos los años de cada fuente (12 work
 
 | Archivo | Descripción |
 |---------|-------------|
-| `output/clipped/EOG_DMSP/` | 22 TIFs DMSP recortados (1992–2013) |
-| `output/clipped/EOG_VIIRS/` | 10 TIFs VIIRS recortados (2012–2021) |
-| `output/clipped/Li2020/` | 33 TIFs armonizados recortados (1992–2024) |
-| `output/clipped/Zhong2025/` | 31 TIFs LRCC-DVNL recortados (1992–2022) |
-| `output/stats/mpios_ntl_*.shp` | Shapefile por fuente con columna `ntl_YYYY` por municipio |
-| `output/stats/stats_*.csv` | Tabla equivalente en formato CSV — 1 122 municipios × N años |
+| `output/01_clipped/EOG_DMSP/` | 22 TIFs DMSP recortados (1992–2013) |
+| `output/01_clipped/EOG_VIIRS/` | 10 TIFs VIIRS recortados (2012–2021) |
+| `output/01_clipped/Li2020/version_8/` | 30 TIFs armonizados v8 recortados (1992–2021) |
+| `output/01_clipped/Li2020/version_10/` | 33 TIFs armonizados v10 recortados (1992–2024) |
+| `output/01_clipped/Zhong2025/` | 31 TIFs LRCC-DVNL recortados (1992–2022) |
+| `output/02_stats/mpios_ntl_*.shp` | Shapefile por fuente con columna `ntl_YYYY` por municipio |
+| `output/02_stats/stats_*.csv` | Tabla equivalente en formato CSV — 1 122 municipios × N años |
+
+### 2.2 `code/02_graph_NTL_PNIS.R` — Gráficas por grupo PNIS
+
+Genera series de tiempo NTL comparando municipios de **alta vs baja probabilidad PNIS** para las 5 fuentes de datos. Por cada fuente produce 3 tipos de gráfica: valores crudos, índice normalizado (base = 100) y log-normalizado. Las salidas se guardan en `output/03_graphs/` (ver `README.md` dentro de esa carpeta para el detalle de cada archivo).
+
+**Paquetes R requeridos:** `dplyr`, `tidyr`, `ggplot2`, `foreign`
 
 ---
 
