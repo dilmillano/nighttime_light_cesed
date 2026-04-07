@@ -71,8 +71,8 @@ base_dir  <- "C:/Users/diana/OneDrive - Universidad de los Andes/nighttime_light
 
 input_ntl <- file.path(base_dir, "input", "ntl")
 input_geo <- file.path(base_dir, "input", "geo")
-out_clip  <- file.path(base_dir, "output", "clipped")
-out_stats <- file.path(base_dir, "output", "stats")
+out_clip  <- file.path(base_dir, "output", "01_clipped")
+out_stats <- file.path(base_dir, "output", "02_stats")
 
 for (d in c(out_clip, out_stats)) dir.create(d, recursive = TRUE, showWarnings = FALSE)
 
@@ -293,34 +293,70 @@ stats_viirs_df <- process_source(
 gc()
 
 # =============================================================================
-# 7. FUENTE 2: Li2020 – Harmonized DMSP-VIIRS (version_10)
+# 7. FUENTE 2: Li2020 – Harmonized DMSP-VIIRS (version_8 y version_10)
 #    Harmonized_DN_NTL_YYYY_calDMSP.tif / _simVIIRS.tif
+#    version_8:  1992–2021
+#    version_10: 1992–2024 (extendida y actualizada)
 # =============================================================================
 
-li_dir  <- file.path(input_ntl, "Li2020_Harmonized_DMSP-VIIRS", "version_10")
-out_li  <- file.path(out_clip, "Li2020")
+out_li_v8  <- file.path(out_clip, "Li2020", "version_8")
+out_li_v10 <- file.path(out_clip, "Li2020", "version_10")
 
-li_meta <- data.frame(
-  path = list.files(li_dir,
+# -- version_8 (1992–2021) ----------------------------------------------------
+li_v8_dir  <- file.path(input_ntl, "Li2020_Harmonized_DMSP-VIIRS", "version_8")
+
+li_v8_meta <- data.frame(
+  path = list.files(li_v8_dir,
                     pattern = "^Harmonized_DN_NTL_\\d{4}_(calDMSP|simVIIRS)\\.tif$",
                     full.names = TRUE)
 ) |>
   mutate(
     year    = as.integer(str_extract(basename(path), "\\d{4}")),
     product = str_extract(basename(path), "(calDMSP|simVIIRS)"),
-    label   = paste0("Li2020_", year, "_", product)
+    label   = paste0("Li2020_v8_", year, "_", product)
   ) |>
   arrange(year)
 
-stats_li_df <- process_source(
-  meta_df     = li_meta,
+stats_li_v8_df <- process_source(
+  meta_df     = li_v8_meta,
   shp_path    = shp_path,
-  out_folder  = out_li,
-  source_name = "Li2020",
+  out_folder  = out_li_v8,
+  source_name = "Li2020_v8",
   extra_cols  = list(
-    source  = rep("Li2020", nrow(li_meta)),
-    year    = li_meta$year,
-    product = li_meta$product
+    source  = rep("Li2020_v8", nrow(li_v8_meta)),
+    year    = li_v8_meta$year,
+    product = li_v8_meta$product,
+    version = rep("version_8", nrow(li_v8_meta))
+  )
+)
+
+gc()
+
+# -- version_10 (1992–2024) ---------------------------------------------------
+li_v10_dir  <- file.path(input_ntl, "Li2020_Harmonized_DMSP-VIIRS", "version_10")
+
+li_v10_meta <- data.frame(
+  path = list.files(li_v10_dir,
+                    pattern = "^Harmonized_DN_NTL_\\d{4}_(calDMSP|simVIIRS)\\.tif$",
+                    full.names = TRUE)
+) |>
+  mutate(
+    year    = as.integer(str_extract(basename(path), "\\d{4}")),
+    product = str_extract(basename(path), "(calDMSP|simVIIRS)"),
+    label   = paste0("Li2020_v10_", year, "_", product)
+  ) |>
+  arrange(year)
+
+stats_li_v10_df <- process_source(
+  meta_df     = li_v10_meta,
+  shp_path    = shp_path,
+  out_folder  = out_li_v10,
+  source_name = "Li2020_v10",
+  extra_cols  = list(
+    source  = rep("Li2020_v10", nrow(li_v10_meta)),
+    year    = li_v10_meta$year,
+    product = li_v10_meta$product,
+    version = rep("version_10", nrow(li_v10_meta))
   )
 )
 
@@ -369,10 +405,11 @@ plan(sequential)
 cat("\nExportando resultados...\n")
 
 # --- 10a. CSVs ---------------------------------------------------------------
-write.csv(stats_dmsp_df,  file.path(out_stats, "stats_EOG_DMSP.csv"),  row.names = FALSE)
-write.csv(stats_viirs_df, file.path(out_stats, "stats_EOG_VIIRS.csv"), row.names = FALSE)
-write.csv(stats_li_df,    file.path(out_stats, "stats_Li2020.csv"),    row.names = FALSE)
-write.csv(stats_zhong_df, file.path(out_stats, "stats_Zhong2025.csv"), row.names = FALSE)
+write.csv(stats_dmsp_df,   file.path(out_stats, "stats_EOG_DMSP.csv"),    row.names = FALSE)
+write.csv(stats_viirs_df,  file.path(out_stats, "stats_EOG_VIIRS.csv"),   row.names = FALSE)
+write.csv(stats_li_v8_df,  file.path(out_stats, "stats_Li2020_v8.csv"),   row.names = FALSE)
+write.csv(stats_li_v10_df, file.path(out_stats, "stats_Li2020_v10.csv"),  row.names = FALSE)
+write.csv(stats_zhong_df,  file.path(out_stats, "stats_Zhong2025.csv"),   row.names = FALSE)
 
 # --- 10b. Shapefiles: una columna ntl_YYYY por año -------------------------
 
@@ -404,11 +441,17 @@ export_shapefile <- function(stats_df, municipios_sf, source_name, out_folder) {
   cat(sprintf("  Shapefile: mpios_ntl_%s.shp\n", source_name))
 }
 
-export_shapefile(stats_dmsp_df,  mpios, "EOG_DMSP",  out_stats)
-export_shapefile(stats_viirs_df, mpios, "EOG_VIIRS", out_stats)
-export_shapefile(stats_li_df,    mpios, "Li2020",    out_stats)
-export_shapefile(stats_zhong_df, mpios, "Zhong2025", out_stats)
+export_shapefile(stats_dmsp_df,   mpios, "EOG_DMSP",    out_stats)
+export_shapefile(stats_viirs_df,  mpios, "EOG_VIIRS",   out_stats)
+export_shapefile(stats_li_v8_df,  mpios, "Li2020_v8",   out_stats)
+export_shapefile(stats_li_v10_df, mpios, "Li2020_v10",  out_stats)
+export_shapefile(stats_zhong_df,  mpios, "Zhong2025",   out_stats)
 
 cat("\n=== Proceso completado ===\n")
-cat("TIFs recortados:  output/clipped/\n")
-cat("Shapefiles/CSV:   output/stats/\n")
+cat("TIFs recortados:\n")
+cat("  output/01_clipped/EOG_DMSP/\n")
+cat("  output/01_clipped/EOG_VIIRS/\n")
+cat("  output/01_clipped/Li2020/version_8/\n")
+cat("  output/01_clipped/Li2020/version_10/\n")
+cat("  output/01_clipped/Zhong2025/\n")
+cat("Shapefiles/CSV:   output/02_stats/\n")

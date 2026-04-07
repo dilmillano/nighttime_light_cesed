@@ -2,7 +2,7 @@
 input/
 
 # TIFs recortados (pesados, quedan en OneDrive)
-output/clipped/
+output/01_clipped/
 
 # Archivos temporales y del sistema
 *.aux.xml
@@ -18,3 +18,6 @@ Thumbs.db
 # Instrucciones internas
 GITHUB_INSTRUCTIONS.txt
 dataverse_files.zip
+
+# Scripts locales (uso personal, no parte del repositorio)
+code/local_*.R
