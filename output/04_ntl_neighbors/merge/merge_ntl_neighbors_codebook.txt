@@ -1,0 +1,82 @@
+================================================================================
+CODEBOOK: merge_ntl_neighbors
+Dataset de luces nocturnas (NTL) por municipio - 5 paises vecinos de Colombia
+Ultima actualizacion: 2026-04-17
+================================================================================
+
+FUENTE NTL  : Li2020 Harmonized DMSP-VIIRS version 10
+              Chen et al. (2021) - https://doi.org/10.1016/j.rse.2020.112276
+              Anos cubiertos: 2006-2019
+              2006-2013: producto calDMSP (calibrado DMSP)
+              2014-2019: producto simVIIRS (simulado VIIRS)
+
+FUENTE GEO  : IPUMS International - GIS Boundary Files
+              Minnesota Population Center, University of Minnesota
+              https://international.ipums.org/international/gis.shtml
+              Limites generalizados y armonizados para analisis estadistico.
+
+PAISES      : Ecuador (141 unidades), Venezuela (238), Peru (169),
+              Mexico (2469), Brasil (2422)
+              Total: 5439 unidades
+
+ARCHIVOS    : merge_ntl_neighbors.shp  -> shapefile con geometria
+              merge_ntl_neighbors.csv  -> CSV plano sin geometria
+              merge_ntl_neighbors.dta  -> Stata 14+ con variable labels
+
+================================================================================
+DESCRIPCION DE VARIABLES
+================================================================================
+
+Variable        Tipo     Descripcion
+--------------------------------------------------------------------------------
+country         string   Nombre del pais en ingles (ej. Brazil, Ecuador)
+
+cntry_code      numeric  Codigo numerico del pais segun IPUMS International
+
+admin_name      string   Nombre del municipio/canton/provincia estandarizado
+                         por IPUMS. Equivalente al nivel 2 administrativo.
+
+ipum_code       string   Codigo geografico armonizado de IPUMS (unico a nivel
+                         global). Permite linkear con microdatos censales IPUMS.
+                         Formato: concatenacion de codigo pais + codigo unidad.
+
+ipum_ref_year   numeric  Ano del censo al que corresponde la definicion de
+                         limites del shapefile IPUMS utilizado:
+                           Ecuador   -> 2010
+                           Venezuela -> 2001
+                           Peru      -> 2017
+                           Mexico    -> 2020
+                           Brasil    -> 2010
+
+muni_code       string   Codigo oficial nacional del municipio segun el censo
+                         de referencia de cada pais. Ver muni_orig_col para
+                         saber a que columna original corresponde.
+
+muni_orig_col   string   Nombre original de la columna de codigo nacional en
+                         el shapefile IPUMS. Permite trazabilidad exacta:
+                           Ecuador   -> CANT2010  (canton, censo 2010)
+                           Venezuela -> MUNI2001  (municipio, censo 2001)
+                           Peru      -> PROV2017  (provincia, censo 2017)
+                           Mexico    -> MUNI2020  (municipio, censo 2020)
+                           Brasil    -> MUNI2010  (municipio, censo 2010)
+
+parent          string   Codigo de la unidad administrativa de nivel superior
+                         (estado/departamento/provincia) al que pertenece
+                         el municipio, segun codificacion IPUMS.
+
+ntl_2006 ...    numeric  Media del valor NTL (Digital Number, DN) de todos los
+ntl_2019                 pixeles dentro del municipio para cada ano.
+                         Fuente: Li2020 Harmonized DMSP-VIIRS v10.
+                         Unidades: numero digital (DN), escala 0-63 aprox.
+                         NA: municipios sin pixeles validos en ese ano.
+
+================================================================================
+NOTAS
+================================================================================
+1. ipum_code es el identificador recomendado para joins con otras fuentes
+   IPUMS (microdatos censales, geospatial contextuals, etc.).
+
+2. Los codigos nacionales (muni_code) pueden no ser comparables entre paises
+   ya que cada pais tiene su propio sistema de codificacion.
+
+3. La columna ipum_ref_year indica el a�o del shapefile base. 
