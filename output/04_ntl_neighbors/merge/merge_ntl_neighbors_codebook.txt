@@ -1,6 +1,7 @@
 ================================================================================
 CODEBOOK: merge_ntl_neighbors
 Dataset de luces nocturnas (NTL) por municipio - 5 paises vecinos de Colombia
+Ultima actualizacion: 2026-04-17
 ================================================================================
 
 FUENTE NTL  : Li2020 Harmonized DMSP-VIIRS version 10
@@ -78,4 +79,4 @@ NOTAS
 2. Los codigos nacionales (muni_code) pueden no ser comparables entre paises
    ya que cada pais tiene su propio sistema de codificacion.
 
-3. La columna ipum_ref_year indica el año del shapefile base. 
+3. La columna ipum_ref_year indica el aï¿½o del shapefile base. 

@@ -2,6 +2,7 @@
 # 03_process_ntl_neighbors.R
 # NTL promedio por municipio - 5 paises vecinos de Colombia
 #   Ecuador, Venezuela, Peru, Mexico, Brasil
+# Ultima actualizacion: 2026-04-17
 #
 # Fuente NTL : Li2020 Harmonized DMSP-VIIRS version_10, anos 2006-2019
 #   2006-2013 -> Harmonized_DN_NTL_YYYY_calDMSP.tif

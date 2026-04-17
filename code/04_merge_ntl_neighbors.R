@@ -1,6 +1,7 @@
 # =============================================================================
 # 04_merge_ntl_neighbors.R
 # Merge de los 5 paises vecinos con NTL Li2020 v10 (2006-2019)
+# Ultima actualizacion: 2026-04-17
 #
 # Que hace este script:
 #   1. Lee los 5 shapefiles generados en 03_process_ntl_neighbors.R
